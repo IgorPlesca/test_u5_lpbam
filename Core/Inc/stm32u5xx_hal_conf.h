@@ -36,7 +36,7 @@
 
 #define HAL_MODULE_ENABLED
 
-#define HAL_ADC_MODULE_ENABLED
+/*#define HAL_ADC_MODULE_ENABLED */
 /*#define HAL_MDF_MODULE_ENABLED */
 /*#define HAL_COMP_MODULE_ENABLED */
 /*#define HAL_CORDIC_MODULE_ENABLED */
@@ -56,7 +56,7 @@
 /*#define HAL_IWDG_MODULE_ENABLED */
 /*#define HAL_I2C_MODULE_ENABLED */
 /*#define HAL_I2S_MODULE_ENABLED */
-#define HAL_LPTIM_MODULE_ENABLED
+/*#define HAL_LPTIM_MODULE_ENABLED */
 /*#define HAL_LTDC_MODULE_ENABLED */
 /*#define HAL_NAND_MODULE_ENABLED */
 /*#define HAL_NOR_MODULE_ENABLED */
@@ -74,12 +74,12 @@
 /*#define HAL_MMC_MODULE_ENABLED */
 /*#define HAL_SMARTCARD_MODULE_ENABLED */
 /*#define HAL_SMBUS_MODULE_ENABLED */
-/*#define HAL_SPI_MODULE_ENABLED */
+#define HAL_SPI_MODULE_ENABLED
 /*#define HAL_SRAM_MODULE_ENABLED */
 /*#define HAL_TIM_MODULE_ENABLED */
 /*#define HAL_TSC_MODULE_ENABLED */
-#define HAL_RAMCFG_MODULE_ENABLED
-/*#define HAL_UART_MODULE_ENABLED */
+/*#define HAL_RAMCFG_MODULE_ENABLED */
+#define HAL_UART_MODULE_ENABLED
 /*#define HAL_USART_MODULE_ENABLED */
 /*#define HAL_WWDG_MODULE_ENABLED */
 /*#define HAL_DCMI_MODULE_ENABLED */
@@ -188,7 +188,7 @@
   *        HAL drivers code
   */
 
-/* #define USE_FULL_ASSERT    1U */
+ #define USE_FULL_ASSERT    1U
 
 /* ################## Register callback feature configuration ############### */
 /**
@@ -200,7 +200,7 @@
   *        for possible callback identifiers defined in HAL_PPP_CallbackIDTypeDef
   *        for each PPP peripheral).
   */
-#define  USE_HAL_ADC_REGISTER_CALLBACKS        1U /* ADC register callback enabled       */
+#define  USE_HAL_ADC_REGISTER_CALLBACKS        0U /* ADC register callback disabled       */
 #define  USE_HAL_COMP_REGISTER_CALLBACKS       0U /* COMP register callback disabled      */
 #define  USE_HAL_CORDIC_REGISTER_CALLBACKS     0U /* CORDIC register callback disabled    */
 #define  USE_HAL_CRYP_REGISTER_CALLBACKS       0U /* CRYP register callback disabled      */
@@ -218,7 +218,7 @@
 #define  USE_HAL_I2C_REGISTER_CALLBACKS        0U /* I2C register callback disabled       */
 #define  USE_HAL_IWDG_REGISTER_CALLBACKS       0U /* IWDG register callback disabled      */
 #define  USE_HAL_IRDA_REGISTER_CALLBACKS       0U /* IRDA register callback disabled      */
-#define  USE_HAL_LPTIM_REGISTER_CALLBACKS      1U /* LPTIM register callback enabled     */
+#define  USE_HAL_LPTIM_REGISTER_CALLBACKS      0U /* LPTIM register callback disabled     */
 #define  USE_HAL_LTDC_REGISTER_CALLBACKS       0U /* LTDC register callback disabled      */
 #define  USE_HAL_MDF_REGISTER_CALLBACKS        0U /* MDF register callback disabled       */
 #define  USE_HAL_MMC_REGISTER_CALLBACKS        0U /* MMC register callback disabled       */

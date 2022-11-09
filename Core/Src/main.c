@@ -18,11 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "icache.h"
+#include "spi.h"
+#include "usart.h"
+#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-/* Entry point for our LPBAM application*/
-#include "lpbam_lpbamap1.h"
+#include "stdio.h"
+#include "bme280.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,11 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-DMA_HandleTypeDef handle_LPDMA1_Channel0;
-DMA_HandleTypeDef handle_LPDMA1_Channel1;
-
-ADC_HandleTypeDef hadc4;
-LPTIM_HandleTypeDef hlptim1;
 /* USER CODE BEGIN PV */
 /* Array containing addresses of LPDMA handlers for the 2 channels*/
 DMA_HandleTypeDef *LPBAM_LpbamAp1_Scenario_DMAHandlers[2];
@@ -57,16 +56,20 @@ uint16_t Data_Sequence[320] = {0U};
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void SystemPower_Config(void);
-static void MX_LPDMA1_Init(void);
-static void MX_GPIO_Init(void);
-static void MX_ICACHE_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int file, char *ptr, int len)
+{
+	for(int i=0; i<len; i++)
+	{
+		HAL_UART_Transmit(&huart1, (const uint8_t *)(ptr++), 1, 1);
+	}
+	return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -76,6 +79,8 @@ static void MX_ICACHE_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  struct bme280_dev dev;
+  int8_t result = BME280_OK;
 
   /* USER CODE END 1 */
 
@@ -99,28 +104,27 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_LPDMA1_Init();
   MX_GPIO_Init();
   MX_ICACHE_Init();
+  MX_SPI3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* LPBAM ADC application init */
-  MX_LpbamAp1_Init();
-  /* LPBAM ADC application scenario init */
-  MX_LpbamAp1_Scenario_Init();
-  /* LPBAM ADC application build */
-  MX_LpbamAp1_Scenario_Build();
-  /* LPBAM scenarios link with LPDMA handlers */
-  LPBAM_LpbamAp1_Scenario_DMAHandlers[0U] = &handle_LPDMA1_Channel0;
-  LPBAM_LpbamAp1_Scenario_DMAHandlers[1U] = &handle_LPDMA1_Channel1;
-  /* LPBAM ADC application link */
-  MX_LpbamAp1_Scenario_Link(LPBAM_LpbamAp1_Scenario_DMAHandlers[0U]);
-  /* LPBAM ADC application start */
-  MX_LpbamAp1_Scenario_Start(LPBAM_LpbamAp1_Scenario_DMAHandlers[0U]);
+  dev.dev_id = 0;
+  dev.intf = BME280_SPI_INTF;
+  dev.read = SPI_Read;
+  dev.write = SPI_Write;
+  dev.delay_ms = HAL_Delay;
 
-  /* API to disable Debug in STOP mode */
-  HAL_DBGMCU_DisableDBGStopMode();
-  /* API to enter in STOP2 */
-  HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
+  result = bme280_init(&dev);
+  if(result == 0)
+  {
+	  printf("Init Success\r\n");
+  }
+  else
+  {
+	  printf("Init Fail,Please Check your address or the wire you connected!!! (result=%d)\r\n", result);
+	  while(1);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -193,203 +197,6 @@ static void SystemPower_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief ICACHE Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ICACHE_Init(void)
-{
-
-  /* USER CODE BEGIN ICACHE_Init 0 */
-
-  /* USER CODE END ICACHE_Init 0 */
-
-  /* USER CODE BEGIN ICACHE_Init 1 */
-
-  /* USER CODE END ICACHE_Init 1 */
-
-  /** Enable instruction cache in 1-way (direct mapped cache)
-  */
-  if (HAL_ICACHE_ConfigAssociativityMode(ICACHE_1WAY) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_ICACHE_Enable() != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ICACHE_Init 2 */
-
-  /* USER CODE END ICACHE_Init 2 */
-
-}
-
-/**
-  * @brief LPDMA1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_LPDMA1_Init(void)
-{
-
-  /* USER CODE BEGIN LPDMA1_Init 0 */
-
-  /* USER CODE END LPDMA1_Init 0 */
-
-  /* Peripheral clock enable */
-  __HAL_RCC_LPDMA1_CLK_ENABLE();
-
-  /* LPDMA1 interrupt Init */
-    HAL_NVIC_SetPriority(LPDMA1_Channel1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(LPDMA1_Channel1_IRQn);
-
-  /* USER CODE BEGIN LPDMA1_Init 1 */
-
-  /* USER CODE END LPDMA1_Init 1 */
-  handle_LPDMA1_Channel0.Instance = LPDMA1_Channel0;
-  handle_LPDMA1_Channel0.InitLinkedList.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
-  handle_LPDMA1_Channel0.InitLinkedList.LinkStepMode = DMA_LSM_FULL_EXECUTION;
-  handle_LPDMA1_Channel0.InitLinkedList.TransferEventMode = DMA_TCEM_LAST_LL_ITEM_TRANSFER;
-  handle_LPDMA1_Channel0.InitLinkedList.LinkedListMode = DMA_LINKEDLIST_NORMAL;
-  if (HAL_DMAEx_List_Init(&handle_LPDMA1_Channel0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_DMA_ConfigChannelAttributes(&handle_LPDMA1_Channel0, DMA_CHANNEL_NPRIV) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  handle_LPDMA1_Channel1.Instance = LPDMA1_Channel1;
-  handle_LPDMA1_Channel1.InitLinkedList.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
-  handle_LPDMA1_Channel1.InitLinkedList.LinkStepMode = DMA_LSM_FULL_EXECUTION;
-  handle_LPDMA1_Channel1.InitLinkedList.TransferEventMode = DMA_TCEM_LAST_LL_ITEM_TRANSFER;
-  handle_LPDMA1_Channel1.InitLinkedList.LinkedListMode = DMA_LINKEDLIST_NORMAL;
-  if (HAL_DMAEx_List_Init(&handle_LPDMA1_Channel1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_DMA_ConfigChannelAttributes(&handle_LPDMA1_Channel1, DMA_CHANNEL_NPRIV) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN LPDMA1_Init 2 */
-
-  /* USER CODE END LPDMA1_Init 2 */
-
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-
-  /*Configure GPIO pins : PE2 PE3 PE4 PE5
-                           PE6 PE7 PE8 PE9
-                           PE10 PE11 PE12 PE13
-                           PE14 PE15 PE0 PE1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
-                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
-                          |GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PC13 PC14 PC15 PC0
-                           PC1 PC2 PC3 PC6
-                           PC7 PC8 PC9 PC10
-                           PC11 PC12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0
-                          |GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PF0 PF1 PF2 PF3
-                           PF4 PF5 PF6 PF7
-                           PF8 PF9 PF10 PF11
-                           PF12 PF13 PF14 PF15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PH0 PH1 PH3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_3;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA0 PA1 PA2 PA3
-                           PA4 PA5 PA6 PA7
-                           PA8 PA9 PA10 PA11
-                           PA12 PA13 PA14 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PB0 PB1 PB2 PB10
-                           PB11 PB13 PB14 PB15
-                           PB3 PB4 PB5 PB6
-                           PB7 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PG0 PG1 PG2 PG3
-                           PG4 PG5 PG6 PG7
-                           PG8 PG9 PG10 PG12
-                           PG13 PG14 PG15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_12
-                          |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PD8 PD9 PD10 PD11
-                           PD12 PD13 PD14 PD15
-                           PD0 PD1 PD2 PD3
-                           PD4 PD5 PD6 PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
