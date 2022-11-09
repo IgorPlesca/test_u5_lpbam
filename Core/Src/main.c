@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "bme280.h"
+#include "bme280_application.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,6 +135,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	//Using forced mode to read the data
+	stream_sensor_data_normal_mode(&dev);
   }
   /* USER CODE END 3 */
 }
