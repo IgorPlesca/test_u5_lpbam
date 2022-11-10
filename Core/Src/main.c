@@ -47,11 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-/* Array containing addresses of LPDMA handlers for the 2 channels*/
-DMA_HandleTypeDef *LPBAM_LpbamAp1_Scenario_DMAHandlers[2];
 
-/* Buffer for ADC4 data */
-uint16_t Data_Sequence[320] = {0U};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,7 +129,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	//Using forced mode to read the data
+	//Using normal mode to read the data
 	stream_sensor_data_normal_mode(&dev);
   }
   /* USER CODE END 3 */
