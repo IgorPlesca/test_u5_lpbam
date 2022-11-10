@@ -65,10 +65,8 @@ static void SystemPower_Config(void);
 /* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)
 {
-	for(int i=0; i<len; i++)
-	{
-		HAL_UART_Transmit(&huart1, (const uint8_t *)(ptr++), 1, 1);
-	}
+	HAL_UART_Transmit_IT(&huart1, (const uint8_t *)(ptr), len);
+
 	return len;
 }
 /* USER CODE END 0 */
